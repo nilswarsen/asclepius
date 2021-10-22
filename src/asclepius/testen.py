@@ -187,8 +187,8 @@ class TestFuncties:
         return prestatiekaart, bevindingen
 
     def aantal_indicatoren(self, wrangled_data: DataFrame):
-        lengte_a = wrangled_data['index_a'].max()
-        lengte_p = wrangled_data['index_p'].max()
+        lengte_a = wrangled_data['index_a'].max() + 1
+        lengte_p = wrangled_data['index_p'].max() + 1
         return lengte_a, lengte_p
 
     def conclusie(self, bevindingen, lengte_a: int, lengte_p: int):

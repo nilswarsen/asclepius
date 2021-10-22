@@ -9,177 +9,152 @@ from typing import Union
 from pandas import ExcelWriter
 
 class ReleaseTesten:
-
-    def __init__(self, gebruiker: Medewerker, *producten: str, losse_bestanden: bool = False):
-        
-        # Te testen
-        self.da = False
-        self.bi = False
-        self.zpm = False
+    
+    def __init__(self, gebruiker: Medewerker, losse_bestanden: bool = False):
 
         # Initialiseren
         self.gebruiker = gebruiker
-        self.portaaldriver = PortaalDriver(self.gebruiker, producten)
+        self.portaaldriver = PortaalDriver(self.gebruiker)
         self.testfuncties = TestFuncties()
         self.verklaren = Verklaren()
 
         self.losse_bestanden = losse_bestanden
-
-        self.update_producten(producten)
+        
         return None
-
-    def update_producten(self, *producten):
-        if 'da' in producten:
-            self.da = True
-        else: pass
-        if 'bi' in producten:
-            self.bi = True
-        else: pass
-        if 'zpm' in producten:
-            self.zpm = True
-        else: pass
-        return None
-
-    def test(self, *instellingen: Union[GGZ, ZKH]):
+    
+    def test_da(self, *instellingen: Union[GGZ, ZKH]):
+        # Download excelbestanden
         mislukt_download = []
-        mislukt_da = []
-        mislukt_bi = []
-        mislukt_zpm = []
-
-        # -------------- DOWNLOAD EXCELS --------------
-
-        # Download de relevante excels voor alle instellingen
         for instelling in instellingen:
             try:
-                self.portaaldriver.webscraper(instelling)
+                self.portaaldriver.webscraper_da(instelling)
             except:
                 mislukt_download.append(instelling.klant_code)
-        
 
-        # -------------- TEST DA, BI, ZPM --------------
-        
-        # Test de instellingen waarvan de files correct zijn gedownload
+        # Test de DA
+        mislukt_da = []
         for instelling in instellingen:
-            if instelling.klant_code not in set(mislukt_download):
+            try:        
+                # Aantallencheck
+                self.testfuncties.aantallencheck(instelling, False)
+                self.testfuncties.aantallencheck(instelling, True)
 
-                # Test DA
-                if self.da and instelling.da:
-                    try:
-                        self.test_da(instelling)
-                    except:
-                        mislukt_da.append(instelling.klant_code)
-                else:
-                    pass
-
-                # Test BI
-                if self.bi and instelling.bi:
-                    try:
-                        self.test_bi(instelling)
-                    except:
-                        mislukt_bi.append(instelling.klant_code)
-                else:
-                    pass
-
-                # Test ZPM
-                if self.zpm and instelling.zpm:
-                    try:
-                        self.test_zpm(instelling)
-                    except:
-                        mislukt_zpm.append(instelling.klant_code)
-                else:
-                    pass
-
-
-        # -------------- PRINT RESULTATEN --------------
-        # print de resultaten van de DA test
-        if self.da and self.losse_bestanden:
+                # Standaardverschillen vinden
+                self.verklaren.standaardverschillen_da(instelling, False)
+                self.verklaren.standaardverschillen_da(instelling, True)
+            except:
+                mislukt_da.append(instelling.klant_code)
+        
+        if self.losse_bestanden:
             for instelling in instellingen:
-                if instelling.klant_code not in set(mislukt_download + mislukt_da) and instelling.da:
+                if instelling.klant_code not in set(mislukt_download + mislukt_da):
                     with ExcelWriter(f'Bevindingen DA {instelling.klant_code}.xlsx') as writer:
                         instelling.bevindingen_da.to_excel(writer, sheet_name=f'{instelling.klant_code}')
                         instelling.bevindingen_da_test.to_excel(writer, sheet_name=f'{instelling.klant_code} test')
                 else: pass
-        elif self.da:
+        else:
             with ExcelWriter(f'Bevindingen DA.xlsx') as writer:
                 for instelling in instellingen:
-                    if instelling.klant_code not in set(mislukt_download + mislukt_da) and instelling.da:
+                    if instelling.klant_code not in set(mislukt_download + mislukt_da):
                         instelling.bevindingen_da.to_excel(writer, sheet_name=f'{instelling.klant_code}')
                         instelling.bevindingen_da_test.to_excel(writer, sheet_name=f'{instelling.klant_code} test')
                     else: pass
-        else: pass
-        
-        if self.bi and self.losse_bestanden:
-            for instelling in instellingen:
-                if instelling.klant_code not in set(mislukt_download + mislukt_bi) and instelling.bi:
-                    with ExcelWriter(f'Bevindingen BI {instelling.klant_code}.xlsx') as writer:
-                        instelling.bevindingen_bi.to_excel(writer, sheet_name=f'{instelling.klant_code}')
-                else: pass
-        elif self.bi:
-            with ExcelWriter(f'Bevindingen BI.xlsx') as writer:
-                for instelling in instellingen:
-                    if instelling.klant_code not in set(mislukt_download + mislukt_bi) and instelling.bi:
-                        instelling.bevindingen_bi.to_excel(writer, sheet_name=f'{instelling.klant_code}')
-                    else: pass
-        else: pass
-        
-        if self.zpm and self.losse_bestanden:
-            for instelling in instellingen:
-                if instelling.klant_code not in set(mislukt_download + mislukt_zpm) and instelling.zpm:
-                    with ExcelWriter(f'Bevindingen ZPM {instelling.klant_code}.xlsx') as writer:
-                        instelling.bevindingen_zpm.to_excel(writer, sheet_name=f'{instelling.klant_code}')
-                else: pass
-        elif self.zpm:
-            with ExcelWriter(f'Bevindingen ZPM.xlsx') as writer:
-                for instelling in instellingen:
-                    if instelling.klant_code not in set(mislukt_download + mislukt_zpm) and instelling.zpm:
-                        instelling.bevindingen_zpm.to_excel(writer, sheet_name=f'{instelling.klant_code}')
-                    else: pass
-        else: pass
 
-
-        # -------------- MISLUKTE INSTELLINGEN --------------
-
+        # Print mislukte downloads/tests
         if len(mislukt_download) != 0:
             print('Mislukte downloads:', ' '.join(mislukt_download))
         else:
             print('Geen mislukte downloads!')
         
-        if self.da and len(mislukt_da) != 0:
+        if len(mislukt_da) != 0:
             print('Mislukte DA tests:', ' '.join(mislukt_da))
-        elif self.da:
+        else:
             print('Geen mislukte DA tests!')
-        else: pass
+        return None
+    
+    def test_bi(self, *instellingen: Union[GGZ, ZKH]):
+        # Download excelbestanden
+        mislukt_download = []
+        for instelling in instellingen:
+            try:
+                self.portaaldriver.webscraper_bi(instelling)
+            except:
+                mislukt_download.append(instelling.klant_code)
 
-        if self.bi and len(mislukt_bi) != 0:
+        # Test de BI
+        mislukt_bi = []
+        for instelling in instellingen:
+            try:        
+                # Vergelijk BI prestatiekaarten
+                self.testfuncties.prestatiekaarten_vergelijken(instelling, 'bi')
+            except:
+                mislukt_bi.append(instelling.klant_code)
+
+        if self.losse_bestanden:
+            for instelling in instellingen:
+                if instelling.klant_code not in set(mislukt_download + mislukt_bi):
+                    with ExcelWriter(f'Bevindingen BI {instelling.klant_code}.xlsx') as writer:
+                        instelling.bevindingen_bi.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                else: pass
+        else:
+            with ExcelWriter(f'Bevindingen BI.xlsx') as writer:
+                for instelling in instellingen:
+                    if instelling.klant_code not in set(mislukt_download + mislukt_bi):
+                        instelling.bevindingen_bi.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                    else: pass
+        
+        # Print mislukte downloads/tests
+        if len(mislukt_download) != 0:
+            print('Mislukte downloads:', ' '.join(mislukt_download))
+        else:
+            print('Geen mislukte downloads!')
+
+        if len(mislukt_bi) != 0:
             print('Mislukte BI tests:', ' '.join(mislukt_bi))
-        elif self.bi:
+        else:
             print('Geen mislukte BI tests!')
-        else: pass
+        return None
+    
+    def test_zpm(self, *instellingen: Union[GGZ, ZKH]):
+        # Download excelbestanden
+        mislukt_download = []
+        for instelling in instellingen:
+            try:
+                self.portaaldriver.webscraper_zpm(instelling)
+            except:
+                mislukt_download.append(instelling.klant_code)
 
-        if self.zpm and len(mislukt_zpm) != 0:
+        # Test de BI
+        mislukt_zpm = []
+        for instelling in instellingen:
+            try:        
+                # Vergelijk BI prestatiekaarten
+                self.testfuncties.prestatiekaarten_vergelijken(instelling, 'zpm')
+            except:
+                mislukt_zpm.append(instelling.klant_code)
+
+        if self.losse_bestanden:
+            for instelling in instellingen:
+                if instelling.klant_code not in set(mislukt_download + mislukt_zpm):
+                    with ExcelWriter(f'Bevindingen BI {instelling.klant_code}.xlsx') as writer:
+                        instelling.bevindingen_bi.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                else: pass
+        else:
+            with ExcelWriter(f'Bevindingen BI.xlsx') as writer:
+                for instelling in instellingen:
+                    if instelling.klant_code not in set(mislukt_download + mislukt_zpm):
+                        instelling.bevindingen_bi.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                    else: pass
+
+        # Print mislukte downloads/tests
+        if len(mislukt_download) != 0:
+            print('Mislukte downloads:', ' '.join(mislukt_download))
+        else:
+            print('Geen mislukte downloads!')
+        
+        if len(mislukt_zpm) != 0:
             print('Mislukte ZPM tests:', ' '.join(mislukt_zpm))
-        elif self.zpm:
+        else:
             print('Geen mislukte ZPM tests!')
-        else: pass
-
-        # einde van test()
-        return None
-    
-    def test_da(self, instelling: Union[GGZ, ZKH]):
-        # Aantallencheck
-        self.testfuncties.aantallencheck(instelling, False)
-        self.testfuncties.aantallencheck(instelling, True)
-
-        # Standaardverschillen vinden
-        self.verklaren.standaardverschillen_da(instelling, False)
-        self.verklaren.standaardverschillen_da(instelling, True)
-        return None
-    
-    def test_bi(self, instelling: Union[GGZ, ZKH]):
-        self.testfuncties.prestatiekaarten_vergelijken(instelling, 'bi')
-        return None
-    
-    def test_zpm(self, instelling: Union[GGZ, ZKH]):
-        self.testfuncties.prestatiekaarten_vergelijken(instelling, 'zpm')
         return None
     

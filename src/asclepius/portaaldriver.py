@@ -10,29 +10,10 @@ from time import sleep
 class PortaalDriver:
     driver = 'C:\Program Files (x86)\chromedriver.exe'
     
-    def __init__(self, gebruiker: Medewerker, *producten: str):
+    def __init__(self, gebruiker: Medewerker):
         self.gebruiker = gebruiker
         self.driver = PortaalDriver.driver
         self.portaal = None
-
-        # Wat te testen
-        self.da = False
-        self.bi = False
-        self.zpm = False
-
-        self.update_producten(producten)
-        return None
-
-    def update_producten(self, *producten):
-        if 'da' in producten:
-            self.da = True
-        else: pass
-        if 'bi' in producten:
-            self.bi = True
-        else: pass
-        if 'zpm' in producten:
-            self.zpm = True
-        else: pass
         return None
     
     def open_portaal(self):
@@ -40,8 +21,8 @@ class PortaalDriver:
         return None
     
     def inloggen(self, instelling: Union[GGZ, ZKH]):
-        # temp
-        self.open_portaal()
+        # open portaal
+        self.portaal = webdriver.Chrome(self.driver)
         
         # haal de loginpagina op
         self.portaal.get(instelling.login)
@@ -59,7 +40,7 @@ class PortaalDriver:
         sleep(2)
         return
 
-    # DAILY AUDIT FUNCTIES
+    # Download Excel Functies
 
     def download_da_excel(self, instelling: Union[GGZ, ZKH], test: bool = False):
         if test:
@@ -98,49 +79,85 @@ class PortaalDriver:
         sleep(5)
         return None
 
+    # Webscraper Portaal Functies
 
-    def webscraper_portaal(self, instelling: Union[GGZ, ZKH]):
+    def webscraper_da_portaal(self, instelling: Union[GGZ, ZKH]):
         # inloggen op het portaal
         self.inloggen(instelling)
-        
-        if self.bi and instelling.bi:
-            # download excel BI prestatiekaart
-            self.download_bi_excel(instelling)
-            self.gebruiker.webscraper_hernoem_bestand(instelling, 'bi')
-        else:
-            pass
 
-        if self.zpm and instelling.zpm:
-            # download excel ZPM prestatiekaart
-            self.download_zpm_excel(instelling)
-            self.gebruiker.webscraper_hernoem_bestand(instelling, 'zpm')
-        else:
-            pass
-
-        if self.da and instelling.da:
-            # download excel controle/norm in productie
-            self.download_da_excel(instelling, False)
-            self.gebruiker.webscraper_hernoem_bestand(instelling, 'da', False)
+        # download excel controle/norm in productie
+        self.download_da_excel(instelling, False)
+        self.gebruiker.webscraper_hernoem_bestand(instelling, 'da', False)
         
-            sleep(1)
+        sleep(1)
         
             # download excel controle/norm in test
-            self.download_da_excel(instelling, True)
-            self.gebruiker.webscraper_hernoem_bestand(instelling, 'da', True)
-        else:
-            pass
+        self.download_da_excel(instelling, True)
+        self.gebruiker.webscraper_hernoem_bestand(instelling, 'da', True)
 
         # sluit het portaal af
         self.portaal.close()
         return None
 
-    def webscraper(self, instelling: Union[GGZ, ZKH]):
+    def webscraper_bi_portaal(self, instelling: Union[GGZ, ZKH]):
+        # inloggen op het portaal
+        self.inloggen(instelling)
+        
+            # download excel BI prestatiekaart
+        self.download_bi_excel(instelling)
+        self.gebruiker.webscraper_hernoem_bestand(instelling, 'bi')
+        
+
+        # sluit het portaal af
+        self.portaal.close()
+        return None
+
+    def webscraper_zpm_portaal(self, instelling: Union[GGZ, ZKH]):
+        # inloggen op het portaal
+        self.inloggen(instelling)
+
+        # download excel ZPM prestatiekaart
+        self.download_zpm_excel(instelling)
+        self.gebruiker.webscraper_hernoem_bestand(instelling, 'zpm')
+
+        # sluit het portaal af
+        self.portaal.close()
+        return None
+
+    # Webscraper Functies
+
+    def webscraper_da(self, instelling: Union[GGZ, ZKH]):
+        """Download de DA Excels van de opgegeven instelling (ZKH | GGZ)."""
 
         # download excels uit acceptatie omgeving
         instelling.kies_omgeving('acceptatie')
-        self.webscraper_portaal(instelling)
+        self.webscraper_da_portaal(instelling)
 
         # download excels uit productie omgeving
         instelling.kies_omgeving('productie')
-        self.webscraper_portaal(instelling)
+        self.webscraper_da_portaal(instelling)
+        return None
+    
+    def webscraper_bi(self, instelling: Union[GGZ, ZKH]):
+        """Download de BI Excels van de opgegeven instelling (ZKH | GGZ)."""
+
+        # download excels uit acceptatie omgeving
+        instelling.kies_omgeving('acceptatie')
+        self.webscraper_bi_portaal(instelling)
+
+        # download excels uit productie omgeving
+        instelling.kies_omgeving('productie')
+        self.webscraper_bi_portaal(instelling)
+        return None
+
+    def webscraper_zpm(self, instelling: Union[GGZ, ZKH]):
+        """Download de ZPM Excels van de opgegeven instelling (ZKH | GGZ)."""
+
+        # download excels uit acceptatie omgeving
+        instelling.kies_omgeving('acceptatie')
+        self.webscraper_zpm_portaal(instelling)
+
+        # download excels uit productie omgeving
+        instelling.kies_omgeving('productie')
+        self.webscraper_zpm_portaal(instelling)
         return None

@@ -7,14 +7,13 @@ from parameters import HardCodedParameters
 from pandas import DataFrame
 
 class Instelling:
-    def __init__(self, klant_code: str, *producten: str):
+    def __init__(self, klant_code: str):
         self.klant_code = klant_code
         self.baselink = ''
         self.huidige_omgeving = ''
         self.link_dict = {}
 
         # Daily Audit
-        self.da = False
         self.tolerantie_abs = 0
         self.tolerantie_pct = 0
         self.excel_da_a = 'excel_da_a file'
@@ -26,30 +25,14 @@ class Instelling:
         self.bevindingen_da_test = DataFrame()
 
         # BI prestatiekaart
-        self.bi = False
         self.excel_bi_a = 'excel_bi_a file'
         self.excel_bi_p = 'excel_bi_p file'
         self.bevindingen_bi = DataFrame()
 
         # ZPM prestatiekaart
-        self.zpm = False
         self.excel_zpm_a = 'excel_zpm_a file'
         self.excel_zpm_p = 'excel_zpm_p file'
         self.bevindingen_zpm = DataFrame()
-
-        self.update_producten(producten)
-        return None
-    
-    def update_producten(self, *producten):
-        if 'da' in producten:
-            self.da = True
-        else: pass
-        if 'bi' in producten:
-            self.bi = True
-        else: pass
-        if 'zpm' in producten:
-            self.zpm = True
-        else: pass
         return None
     
     def update_baselink(self):
