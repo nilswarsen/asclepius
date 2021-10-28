@@ -256,18 +256,21 @@ class Verklaren:
             else:
                 bevindingen = instelling.bevindingen_da
             
-            bevindingen = self.splits_controle_omschrijving(bevindingen)
-            bevindingen['verklaring'] = ''
+            if len(bevindingen) == 0:
+                pass
+            else:
+                bevindingen = self.splits_controle_omschrijving(bevindingen)
+                bevindingen['verklaring'] = ''
 
-            # Check of de controle/norm in de standaardverschillen van de instelling voorkomt
-            for i in range(len(bevindingen)):
-                entry = bevindingen.iloc[i, :]
+                # Check of de controle/norm in de standaardverschillen van de instelling voorkomt
+                for i in range(len(bevindingen)):
+                    entry = bevindingen.iloc[i, :]
 
-                # Als de controle/norm hierin voorkomt krijgt deze de verklaring 'standaardverschil'
-                if entry['kenmerk'] in set(HardCodedParameters.standaardverschillen_da[instelling.klant_code]):
-                    bevindingen.iloc[i,-1] = "Standaardverschil"
-                else:
-                    pass
+                    # Als de controle/norm hierin voorkomt krijgt deze de verklaring 'standaardverschil'
+                    if entry['kenmerk'] in set(HardCodedParameters.standaardverschillen_da[instelling.klant_code]):
+                        bevindingen.iloc[i,-1] = "Standaardverschil"
+                    else:
+                        pass
             
             # Vervang het bevindingen_da dataframe voor die met de standaardverschillen
             if test:

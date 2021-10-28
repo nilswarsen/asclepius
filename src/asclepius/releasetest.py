@@ -124,11 +124,11 @@ class ReleaseTesten:
             except:
                 mislukt_download.append(instelling.klant_code)
 
-        # Test de BI
+        # Test de ZPM
         mislukt_zpm = []
         for instelling in instellingen:
             try:        
-                # Vergelijk BI prestatiekaarten
+                # Vergelijk ZPM prestatiekaarten
                 self.testfuncties.prestatiekaarten_vergelijken(instelling, 'zpm')
             except:
                 mislukt_zpm.append(instelling.klant_code)
@@ -136,14 +136,14 @@ class ReleaseTesten:
         if self.losse_bestanden:
             for instelling in instellingen:
                 if instelling.klant_code not in set(mislukt_download + mislukt_zpm):
-                    with ExcelWriter(f'Bevindingen BI {instelling.klant_code}.xlsx') as writer:
-                        instelling.bevindingen_bi.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                    with ExcelWriter(f'Bevindingen ZPM {instelling.klant_code}.xlsx') as writer:
+                        instelling.bevindingen_zpm.to_excel(writer, sheet_name=f'{instelling.klant_code}')
                 else: pass
         else:
-            with ExcelWriter(f'Bevindingen BI.xlsx') as writer:
+            with ExcelWriter(f'Bevindingen ZPM.xlsx') as writer:
                 for instelling in instellingen:
                     if instelling.klant_code not in set(mislukt_download + mislukt_zpm):
-                        instelling.bevindingen_bi.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                        instelling.bevindingen_zpm.to_excel(writer, sheet_name=f'{instelling.klant_code}')
                     else: pass
 
         # Print mislukte downloads/tests
