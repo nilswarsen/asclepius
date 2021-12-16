@@ -206,7 +206,11 @@ class TestFuncties:
         elif product == 'zpm':
             excel_a = instelling.excel_zpm_a
             excel_p = instelling.excel_zpm_p
+        elif product == 'zpm_nza':
+            excel_a = instelling.excel_zpm_nza_a
+            excel_p = instelling.excel_zpm_nza_p
         else:
+            print('Geen valide prestatiekaart om te vergelijken!')
             pass
 
         prestatiekaart = self.wrangle_pk(excel_a, excel_p)
@@ -228,6 +232,8 @@ class TestFuncties:
             instelling.bevindingen_bi = bevindingen
         elif product == 'zpm':
             instelling.bevindingen_zpm = bevindingen
+        elif product == 'zpm_nza':
+            instelling.bevindingen_zpm_nza = bevindingen
         else:
             pass
         return None

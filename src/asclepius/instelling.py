@@ -33,6 +33,15 @@ class Instelling:
         self.excel_zpm_a = 'excel_zpm_a file'
         self.excel_zpm_p = 'excel_zpm_p file'
         self.bevindingen_zpm = DataFrame()
+
+        # ZPM_NZA prestatiekaart
+        self.excel_zpm_nza_a = 'excel_zpm_a file'
+        self.excel_zpm_nza_p = 'excel_zpm_p file'
+        self.bevindingen_zpm_nza = DataFrame()
+
+        # SLM deltas totaal
+        self.slm_delta_a = ''
+        self.slm_delta_p = ''
         return None
     
     def update_baselink(self):
@@ -44,6 +53,7 @@ class Instelling:
         self.da_excel_download = self.daily_audit + self.link_dict['da_excel_download']
         self.daily_audit_test = self.baselink + self.link_dict['daily_audit_test']
         self.da_test_excel_download = self.daily_audit_test + self.link_dict['da_test_excel_download']
+        self.da_excel_groot_download = self.daily_audit + self.link_dict['da_excel_groot_download']
 
         # BI links
         self.bi_prestatiekaart = self.baselink + self.link_dict['bi_prestatiekaart']
@@ -52,6 +62,13 @@ class Instelling:
         # zpm links
         self.zpm_prestatiekaart = self.baselink + self.link_dict['zpm_prestatiekaart']
         self.zpm_excel_download = self.baselink + self.link_dict['zpm_excel_download']
+
+        # zpm_nza links
+        self.zpm_nza_prestatiekaart = self.baselink + self.link_dict['zpm_nza_prestatiekaart']
+        self.zpm_nza_excel_download = self.baselink + self.link_dict['zpm_nza_excel_download']
+
+        # slm links
+        self.slm_per_verzekeraar = self.baselink + self.link_dict['slm_per_verzekeraar']
 
         return None
 
@@ -84,6 +101,11 @@ class Instelling:
         
         setattr(self, attr, new_path)
         return None
+    
+    def set_slm_delta(self, rode_delta: str):
+        attr = f'slm_delta_{self.huidige_omgeving[0]}'
+        setattr(self, attr, rode_delta)
+        return None
 
 
 class ZKH(Instelling):
@@ -92,8 +114,8 @@ class ZKH(Instelling):
         super().__init__(klant_code)
 
         self.da = True
-        self.tolerantie_abs = 7
-        self.tolerantie_pct = 2
+        self.tolerantie_abs = 7 # 7
+        self.tolerantie_pct = 2 # 2
 
         self.link_dict = HardCodedParameters.zkh_dict
 

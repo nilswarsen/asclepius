@@ -78,6 +78,21 @@ class PortaalDriver:
         self.portaal.get(instelling.zpm_excel_download)
         sleep(5)
         return None
+    
+    def download_zpm_nza_excel(self, instelling: Union[GGZ, ZKH]):
+        self.portaal.get(instelling.zpm_nza_prestatiekaart)
+        sleep(2)
+        self.portaal.get(instelling.zpm_nza_excel_download)
+        sleep(5)
+        return None
+    
+    def get_slm_delta(self, instelling: Union[GGZ, ZKH]):
+        self.portaal.get(instelling.slm_per_verzekeraar)
+        sleep(2)
+        totaal_footer = self.portaal.find_element_by_tag_name('tfoot')
+        totaal_list = totaal_footer.find_elements_by_tag_name('th')
+        rode_delta = totaal_list[-1].text
+        return rode_delta
 
     # Webscraper Portaal Functies
 
@@ -124,6 +139,45 @@ class PortaalDriver:
         self.portaal.close()
         return None
 
+    def webscraper_zpm_nza_portaal(self, instelling: Union[GGZ, ZKH]):
+        # inloggen op het portaal
+        self.inloggen(instelling)
+
+        # download excel ZPM prestatiekaart
+        self.download_zpm_nza_excel(instelling)
+        self.gebruiker.webscraper_hernoem_bestand(instelling, 'zpm_nza')
+
+        # sluit het portaal af
+        self.portaal.close()
+        return None
+
+    def webscraper_slm_portaal(self, instelling: Union[GGZ, ZKH]):
+        # inloggen op het portaal
+        self.inloggen(instelling)
+
+        # download excel ZPM prestatiekaart
+        rode_delta = self.get_slm_delta(instelling)
+        instelling.set_slm_delta(rode_delta)
+
+        # sluit het portaal af
+        self.portaal.close()
+        return None
+
+    def webscraper_da_groot_portaal(self, instelling: Union[GGZ, ZKH]):
+        # inloggen op het portaal
+        self.inloggen(instelling)
+
+        # download excel controle/norm in productie
+        self.portaal.get(instelling.daily_audit)
+        sleep(2)
+        self.portaal.get(instelling.da_excel_groot_download)
+        sleep(30)
+        self.gebruiker.webscraper_hernoem_bestand(instelling, 'da', False)
+
+        # sluit het portaal af
+        self.portaal.close()
+        return None
+
     # Webscraper Functies
 
     def webscraper_da(self, instelling: Union[GGZ, ZKH]):
@@ -160,4 +214,49 @@ class PortaalDriver:
         # download excels uit productie omgeving
         instelling.kies_omgeving('productie')
         self.webscraper_zpm_portaal(instelling)
+        return None
+    
+    def webscraper_zpm_nza(self, instelling: Union[GGZ, ZKH]):
+        """Download de ZPM Excels van de opgegeven instelling (ZKH | GGZ)."""
+
+        # download excels uit acceptatie omgeving
+        instelling.kies_omgeving('acceptatie')
+        self.webscraper_zpm_nza_portaal(instelling)
+
+        # download excels uit productie omgeving
+        instelling.kies_omgeving('productie')
+        self.webscraper_zpm_nza_portaal(instelling)
+        return None
+
+    def webscraper_slm(self, instelling: Union[GGZ, ZKH]):
+        """Download de BI Excels van de opgegeven instelling (ZKH | GGZ)."""
+
+        # download excels uit acceptatie omgeving
+        instelling.kies_omgeving('acceptatie')
+        self.webscraper_slm_portaal(instelling)
+
+        # download excels uit productie omgeving
+        instelling.kies_omgeving('productie')
+        self.webscraper_slm_portaal(instelling)
+        return None
+
+    def webscraper_da_groot(self, *instellingen: Union[GGZ, ZKH], omgeving: str = 'productie'):
+        mislukt_download = []
+        for instelling in instellingen:
+            #try:
+            #    instelling.kies_omgeving(omgeving)
+            #    self.webscraper_da_groot_portaal(instelling)
+            #except:
+            #    mislukt_download.append(instelling.klant_code)
+            #    print(f'Het downloaden van {instelling.klant_code} is mislukt!')
+            instelling.kies_omgeving(omgeving)
+            self.webscraper_da_groot_portaal(instelling)
+
+
+        # Print mislukte downloads/tests
+        if len(mislukt_download) != 0:
+            print('Mislukte downloads:', ' '.join(mislukt_download))
+        else:
+            print('Geen mislukte downloads!')
+        
         return None

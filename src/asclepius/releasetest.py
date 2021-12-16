@@ -1,4 +1,5 @@
 # import Asclepius dependencies
+from pandas.core.frame import DataFrame
 from asclepius.instelling import GGZ, ZKH
 from asclepius.medewerker import Medewerker
 from asclepius.portaaldriver import PortaalDriver
@@ -156,5 +157,78 @@ class ReleaseTesten:
             print('Mislukte ZPM tests:', ' '.join(mislukt_zpm))
         else:
             print('Geen mislukte ZPM tests!')
+        return None
+
+    def test_zpm_nza(self, *instellingen: Union[GGZ, ZKH]):
+        # Download excelbestanden
+        mislukt_download = []
+        for instelling in instellingen:
+            try:
+                self.portaaldriver.webscraper_zpm_nza(instelling)
+            except:
+                mislukt_download.append(instelling.klant_code)
+
+        # Test de ZPM_NZA
+        mislukt_zpm = []
+        for instelling in instellingen:
+            try:        
+                # Vergelijk ZPM_NZA prestatiekaarten
+                self.testfuncties.prestatiekaarten_vergelijken(instelling, 'zpm_nza')
+            except:
+                mislukt_zpm.append(instelling.klant_code)
+
+        if self.losse_bestanden:
+            for instelling in instellingen:
+                if instelling.klant_code not in set(mislukt_download + mislukt_zpm):
+                    with ExcelWriter(f'Bevindingen ZPM 100% NZA {instelling.klant_code}.xlsx') as writer:
+                        instelling.bevindingen_zpm_nza.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                else: pass
+        else:
+            with ExcelWriter(f'Bevindingen ZPM 100% NZA.xlsx') as writer:
+                for instelling in instellingen:
+                    if instelling.klant_code not in set(mislukt_download + mislukt_zpm):
+                        instelling.bevindingen_zpm_nza.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                    else: pass
+
+        # Print mislukte downloads/tests
+        if len(mislukt_download) != 0:
+            print('Mislukte downloads:', ' '.join(mislukt_download))
+        else:
+            print('Geen mislukte downloads!')
+        
+        if len(mislukt_zpm) != 0:
+            print('Mislukte ZPM 100% NZA tests:', ' '.join(mislukt_zpm))
+        else:
+            print('Geen mislukte ZPM 100% NZA tests!')
+        return None
+
+    def test_slm(self, *instellingen: Union[GGZ, ZKH]):
+        # Download excelbestanden
+        mislukt_download = []
+        for instelling in instellingen:
+            try:
+                self.portaaldriver.webscraper_slm(instelling)
+            except:
+                mislukt_download.append(instelling.klant_code)
+
+        # Test de BI
+        bevindingen_slm = DataFrame({'Instelling': [], 'Delta totaal A': [], 'Delta totaal P': []})
+        for instelling in instellingen:
+            if instelling.klant_code not in set(mislukt_download):
+                    new_row = {'Instelling': instelling.klant_code, 'Delta totaal A': instelling.slm_delta_a, 'Delta totaal P': instelling.slm_delta_p}
+                    bevindingen_slm = bevindingen_slm.append(new_row, ignore_index = True)
+            else: pass
+
+        with ExcelWriter(f'Bevindingen SLM.xlsx') as writer:
+            for instelling in instellingen:
+                if instelling.klant_code not in set(mislukt_download):
+                    bevindingen_slm.to_excel(writer, sheet_name=f'{instelling.klant_code}')
+                else: pass
+        
+        # Print mislukte downloads/tests
+        if len(mislukt_download) != 0:
+            print('Mislukte downloads:', ' '.join(mislukt_download))
+        else:
+            print('Geen mislukte downloads!')
         return None
     
