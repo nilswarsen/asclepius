@@ -9,6 +9,7 @@ from asclepius.testen import TestFuncties, Verklaren
 from typing import Union
 from pandas import ExcelWriter
 
+
 class ReleaseTesten:
     
     def __init__(self, gebruiker: Medewerker, losse_bestanden: bool = False):
@@ -20,9 +21,10 @@ class ReleaseTesten:
         self.verklaren = Verklaren()
 
         self.losse_bestanden = losse_bestanden
-        
+
         return None
-    
+
+
     def test_da(self, *instellingen: Union[GGZ, ZKH]):
         # Download excelbestanden
         mislukt_download = []
